@@ -71,13 +71,65 @@ for r in api_routers:
 app.include_router(ws.router)
 app.include_router(ws.router, prefix=settings.API_V1_STR)
 
-@app.get("/")
-@app.get("/api")
-def root():
-    return {
-        "system": "MediFlow Hospital Resource Management System",
-        "status": "Operational",
-        "version": settings.VERSION,
-        "docs_url": "/docs",
-        "disclaimer": "Clinical decision-support prototype. Requires qualified staff verification."
-    }
+import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Check for production static frontend dist
+base_dir = os.path.dirname(os.path.abspath(__file__))
+dist_candidates = [
+    os.path.abspath(os.path.join(base_dir, "..", "..", "dist")),
+    os.path.abspath(os.path.join(base_dir, "..", "..", "frontend", "dist")),
+]
+static_dist = next((d for d in dist_candidates if os.path.isdir(d) and os.path.exists(os.path.join(d, "index.html"))), None)
+
+if static_dist:
+    assets_dir = os.path.join(static_dist, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/")
+    def serve_frontend_root():
+        return FileResponse(os.path.join(static_dist, "index.html"))
+
+    @app.get("/favicon.svg")
+    def serve_favicon():
+        fav = os.path.join(static_dist, "favicon.svg")
+        if os.path.exists(fav):
+            return FileResponse(fav)
+        return FileResponse(os.path.join(static_dist, "index.html"))
+
+    @app.get("/api")
+    def root_api():
+        return {
+            "system": "MediFlow Hospital Resource Management System",
+            "status": "Operational",
+            "version": settings.VERSION,
+            "docs_url": "/docs",
+            "disclaimer": "Clinical decision-support prototype. Requires qualified staff verification."
+        }
+
+    # Catch-all for SPA client-side routes (e.g. /dashboard, /beds, /admin-login)
+    @app.get("/{full_path:path}")
+    def serve_spa_routes(full_path: str):
+        # Don't intercept API or docs routes
+        if full_path.startswith("api") or full_path in ("docs", "redoc", "openapi.json"):
+            return {
+                "system": "MediFlow Hospital Resource Management System",
+                "status": "Operational"
+            }
+        file_path = os.path.join(static_dist, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(static_dist, "index.html"))
+else:
+    @app.get("/")
+    @app.get("/api")
+    def root():
+        return {
+            "system": "MediFlow Hospital Resource Management System",
+            "status": "Operational",
+            "version": settings.VERSION,
+            "docs_url": "/docs",
+            "disclaimer": "Clinical decision-support prototype. Requires qualified staff verification."
+        }
