@@ -1,0 +1,14 @@
+{
+  "name": "mediflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MediFlow — Smart Hospital Bed & Patient Allocation System",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
