@@ -18,6 +18,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+def get_secret_key() -> str:
+    key = settings.SECRET_KEY
+    if not key or not str(key).strip():
+        return "mediflow_super_secure_jwt_secret_key_2026_dev"
+    return str(key).strip()
+
 def create_access_token(subject: str | Any, role: str, name: str, expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -31,12 +37,12 @@ def create_access_token(subject: str | Any, role: str, name: str, expires_delta:
         "exp": expire,
         "iat": datetime.now(timezone.utc)
     }
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, get_secret_key(), algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 def decode_access_token(token: str) -> Optional[dict]:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[settings.ALGORITHM])
         return payload
     except jwt.PyJWTError:
         return None
