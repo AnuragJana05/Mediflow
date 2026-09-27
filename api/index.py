@@ -20,14 +20,19 @@ async def app(scope, receive, send):
     if scope["type"] == "http":
         path = scope.get("path", "")
         headers = dict(scope.get("headers", []))
-        matched_path = headers.get(b"x-matched-path", b"").decode("utf-8")
+        orig_path = (
+            headers.get(b"x-matched-path", b"").decode("utf-8")
+            or headers.get(b"x-vercel-matched-path", b"").decode("utf-8")
+            or headers.get(b"x-forwarded-uri", b"").decode("utf-8")
+            or ""
+        )
 
-        # If Vercel passed /api/index.py literally, use x-matched-path or normalize
+        # Normalize path if Vercel routed to entrypoint file literally
         if path in ("/api/index.py", "/api/index"):
-            if matched_path:
-                scope["path"] = matched_path
+            if orig_path:
+                scope["path"] = orig_path
             else:
-                scope["path"] = "/"
+                scope["path"] = "/api"
         elif path.startswith("/api/index.py"):
             scope["path"] = path.replace("/api/index.py", "", 1) or "/"
 
