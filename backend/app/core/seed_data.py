@@ -17,11 +17,11 @@ def seed_database(db: Session):
 
     now = datetime.now(timezone.utc)
 
-    # 1. Users
+    # 1. Users (using verified precomputed bcrypt hashes for fast cold starts)
     admin_user = User(
         name="Dr. Sarah Chen",
         email="admin@mediflow.health",
-        password_hash=hash_password("admin123"),
+        password_hash="$2b$12$dD1tGe6E7ge.a372ElwycefH5b.B.tG2AwyTcJfUzy2i.qklSPDKS",
         role=UserRole.ADMIN.value,
         department="Hospital Administration",
         status=UserStatus.ACTIVE.value
@@ -29,7 +29,7 @@ def seed_database(db: Session):
     doctor_user = User(
         name="Dr. Marcus Smith, MD",
         email="dr.smith@mediflow.health",
-        password_hash=hash_password("doctor123"),
+        password_hash="$2b$12$vD3/o.1KS4Mz3Qs0wfo7duZgFO6v5Wv7pZy/WDsyQsUkUY2ufsZai",
         role=UserRole.DOCTOR.value,
         department="Intensive Care & Emergency Medicine",
         status=UserStatus.ACTIVE.value
@@ -37,7 +37,7 @@ def seed_database(db: Session):
     nurse_user = User(
         name="Clara Evans, BSN RN",
         email="nurse.clara@mediflow.health",
-        password_hash=hash_password("nurse123"),
+        password_hash="$2b$12$Tf3oDFzjc2XWwhiDoxTsr.uUc8bME0A6wsEs7kM8LkdmAb1STD6zm",
         role=UserRole.NURSE.value,
         department="Triage & Bed Flow Management",
         status=UserStatus.ACTIVE.value

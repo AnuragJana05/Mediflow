@@ -50,23 +50,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API Routers
-api_prefix = settings.API_V1_STR
-app.include_router(auth.router, prefix=api_prefix)
-app.include_router(dashboard.router, prefix=api_prefix)
-app.include_router(patients.router, prefix=api_prefix)
-app.include_router(beds.router, prefix=api_prefix)
-app.include_router(recommendations.router, prefix=api_prefix)
-app.include_router(analytics.router, prefix=api_prefix)
-app.include_router(alerts.router, prefix=api_prefix)
-app.include_router(audit_logs.router, prefix=api_prefix)
-app.include_router(simulation.router, prefix=api_prefix)
+# Mount API Routers (mounted on both /api and root for Vercel rewrite compatibility)
+api_routers = [
+    auth.router,
+    dashboard.router,
+    patients.router,
+    beds.router,
+    recommendations.router,
+    analytics.router,
+    alerts.router,
+    audit_logs.router,
+    simulation.router,
+]
+
+for r in api_routers:
+    app.include_router(r, prefix=settings.API_V1_STR)
+    app.include_router(r, prefix="")
 
 # WebSocket Router
 app.include_router(ws.router)
-app.include_router(ws.router, prefix=api_prefix)
+app.include_router(ws.router, prefix=settings.API_V1_STR)
 
 @app.get("/")
+@app.get("/api")
 def root():
     return {
         "system": "MediFlow Hospital Resource Management System",

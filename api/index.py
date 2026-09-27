@@ -13,7 +13,24 @@ if backend_dir not in sys.path:
 if "VERCEL" in os.environ and not os.environ.get("DATABASE_URL"):
     os.environ["DATABASE_URL"] = "sqlite:////tmp/mediflow.db"
 
-from app.main import app
+from app.main import app as fastapi_app
 
-# Vercel looks for the ASGI/WSGI entry point variable named `app`
+# ASGI wrapper to normalize paths when Vercel rewrites to /api/index.py
+async def app(scope, receive, send):
+    if scope["type"] == "http":
+        path = scope.get("path", "")
+        headers = dict(scope.get("headers", []))
+        matched_path = headers.get(b"x-matched-path", b"").decode("utf-8")
+
+        # If Vercel passed /api/index.py literally, use x-matched-path or normalize
+        if path in ("/api/index.py", "/api/index"):
+            if matched_path:
+                scope["path"] = matched_path
+            else:
+                scope["path"] = "/"
+        elif path.startswith("/api/index.py"):
+            scope["path"] = path.replace("/api/index.py", "", 1) or "/"
+
+    await fastapi_app(scope, receive, send)
+
 __all__ = ["app"]
