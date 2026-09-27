@@ -50,6 +50,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": str(exc), "traceback": traceback.format_exc(), "type": type(exc).__name__}
+    )
+
 # Mount API Routers (mounted on both /api and root for Vercel rewrite compatibility)
 api_routers = [
     auth.router,
